@@ -1228,7 +1228,9 @@ var EDIT = {
         else{self.active=false;self.panel.classList.remove('visible');document.body.classList.remove('edit-mode');self.disableEditing();}
       }
       if(e.key==='Delete'||e.key==='Backspace'){
-        if(selectedEl && self.active && document.activeElement.tagName!=='INPUT'){
+        var ae=document.activeElement;
+        var isEditing=ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.contentEditable==='true');
+        if(selectedEl && self.active && !isEditing){
           selectedEl.parentNode && selectedEl.parentNode.removeChild(selectedEl);
           selectedEl=null; MAG.sync();
         }
