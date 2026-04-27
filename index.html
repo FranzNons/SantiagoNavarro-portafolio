@@ -539,7 +539,7 @@ body.skin-dark [data-editable][contenteditable="true"]:focus{background:rgba(0,1
   <button class="nav-btn" id="btn-next">→</button>
 </nav>
 
-<div id="edit-panel" class="visible">
+<div id="edit-panel">
   <div id="ep-header">
     <div id="ep-title">MODO EDICION</div>
     <div id="ep-sub">Ctrl+Shift+E para cerrar</div>
@@ -1701,7 +1701,7 @@ if (savedScales) {
     var vl=document.getElementById('sv-'+k); if(vl)vl.textContent=savedScales[k].toFixed(1)+'x';
   });
 }
-var _initSkin = SAVED_SKIN || 'dark';
+var _initSkin = (typeof SAVED_SKIN !== 'undefined' && SAVED_SKIN && SAVED_SKIN !== 'null') ? SAVED_SKIN : 'blueprint';
 if(_initSkin !== 'default') EDIT.setSkin(_initSkin);
 </script>
 
