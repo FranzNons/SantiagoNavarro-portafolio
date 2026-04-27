@@ -791,7 +791,7 @@ function place(el, key, customPos, url) {
   el.dataset.ox = pos.x; el.dataset.oy = pos.y;
   if (pos.rot) { el.style.transform = 'rotate('+pos.rot+'deg)'; el.dataset.rot = pos.rot; }
   if (key) el.dataset.key = key;
-  if (url) el.style.cursor = 'pointer';
+  if (url) { el.style.cursor = 'pointer'; el.dataset.url = url; }
   // Delete button (shown in edit mode when selected)
   var delBtn = document.createElement('button');
   delBtn.className = 'delete-btn';
@@ -1174,7 +1174,7 @@ var EDIT = {
       btn.addEventListener('click',function(){
         var type=btn.dataset.add;
         var el=self.createElement(type);
-        if(el){place(el,null,{x:dropX,y:dropY});dropX+=25;dropY+=25;if(dropX>650){dropX=400;dropY=300;}self.enableEditing();MAG.sync();}
+        if(el){place(el,null,{x:dropX,y:dropY});dropX+=25;dropY+=25;if(dropX>650){dropX=400;dropY=300;}self.enableEditing();STORE.save(PROJECTS[current].id);MAG.sync();}
       });
     });
 
@@ -1233,6 +1233,7 @@ var EDIT = {
       if(src.indexOf('var SAVED_SKIN')!==-1){src=src.replace(/var SAVED_SKIN=[^;]*;/,skinStr);}
       else{src=src.replace('var SAVED_SCALES',skinStr+'\nvar SAVED_SCALES');}
 
+      STORE.save(PROJECTS[current].id);
       var blob=new Blob([src],{type:'text/html;charset=utf-8'});
       var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='index.html';
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
@@ -1243,11 +1244,10 @@ var EDIT = {
     };
 
     document.getElementById('ep-reset').onclick=function(){
-      // Clear saved state for current project so BASE is used
-      if(PROJECTS[current]){
-        try{ localStorage.removeItem('proj_'+PROJECTS[current].id); }catch(e){}
-      }
-      document.getElementById('reset-btn').click();
+      if(PROJECTS[current]) STORE.clear(PROJECTS[current].id);
+      build(PROJECTS[current]);
+      STORE.save(PROJECTS[current].id);
+      MAG.sync();
     };
   },
 
@@ -1606,124 +1606,92 @@ var LB = {
   }
 };
 
-// ── PERSISTENCE (localStorage) ───────────────────────────────────────────────
+// ── PERSISTENCE ──────────────────────────────────────────────────────────────
 var STORE = {
-  // Save current canvas state for a project
-  saveProject: function(projectId) {
-    var state = { positions: {}, deleted: [] };
+  key: function(id)    { return 'proj__' + id; },
+  skinKey: 'p_skin',
+  scaleKey: 'p_scales',
+
+  // Save full canvas HTML snapshot for a project
+  save: function(projectId) {
+    try {
+      // Clone canvas so we can clean it up before saving
+      var clone = canvas.cloneNode(true);
+      // Remove delete buttons (they'll be re-created on restore)
+      clone.querySelectorAll('.delete-btn').forEach(function(b){ b.remove(); });
+      localStorage.setItem(this.key(projectId), clone.innerHTML);
+    } catch(e) {}
+  },
+
+  // Restore canvas from snapshot, re-attach all interactions
+  restore: function(projectId) {
+    var html = null;
+    try { html = localStorage.getItem(this.key(projectId)); } catch(e){}
+    if (!html) return false;
+    canvas.innerHTML = html;
+    // Re-attach drag + delete button to every .drag element
     canvas.querySelectorAll('.drag').forEach(function(el) {
-      var key = el.dataset.key;
-      if (key) {
-        // Check if element is still in canvas (not deleted)
-        state.positions[key] = {
-          x: parseInt(el.style.left) || 0,
-          y: parseInt(el.style.top)  || 0
-        };
-        if (el.dataset.rot) state.positions[key].rot = parseFloat(el.dataset.rot);
-      }
+      var url = el.dataset.url || null;
+      // Re-add delete button
+      var del = document.createElement('button');
+      del.className = 'delete-btn';
+      del.innerHTML = '&times;';
+      del.addEventListener('mousedown', function(e){ e.stopPropagation(); });
+      del.addEventListener('click', function(e){
+        e.stopPropagation();
+        el.parentNode && el.parentNode.removeChild(el);
+        selectedEl = null;
+        STORE.save(PROJECTS[current].id);
+        MAG.sync();
+      });
+      el.appendChild(del);
+      draggable(el, url);
     });
-    // Track which base keys are missing (deleted)
-    var baseKeys = ['logo','brand','desc','photo','challenge','role','copy','post0','post1','post2','browser'];
-    baseKeys.forEach(function(k) {
-      var found = false;
-      canvas.querySelectorAll('.drag').forEach(function(el){ if(el.dataset.key===k) found=true; });
-      if (!found) state.deleted.push(k);
-    });
-    try { localStorage.setItem('proj_'+projectId, JSON.stringify(state)); } catch(e){}
+    return true;
   },
 
-  // Load saved state for a project
-  loadProject: function(projectId) {
-    try {
-      var raw = localStorage.getItem('proj_'+projectId);
-      return raw ? JSON.parse(raw) : null;
-    } catch(e) { return null; }
+  clear: function(projectId) {
+    try { localStorage.removeItem(this.key(projectId)); } catch(e){}
   },
 
-  // Save skin
-  saveSkin: function(name) {
-    try { localStorage.setItem('portfolio_skin', name); } catch(e){}
-  },
-  loadSkin: function() {
-    try { return localStorage.getItem('portfolio_skin'); } catch(e){ return null; }
-  },
-
-  // Save scales
-  saveScales: function(scales) {
-    try { localStorage.setItem('portfolio_scales', JSON.stringify(scales)); } catch(e){}
-  },
-  loadScales: function() {
-    try {
-      var raw = localStorage.getItem('portfolio_scales');
-      return raw ? JSON.parse(raw) : null;
-    } catch(e){ return null; }
-  }
+  saveSkin:   function(s)  { try{ localStorage.setItem(this.skinKey, s); }catch(e){} },
+  loadSkin:   function()   { try{ return localStorage.getItem(this.skinKey); }catch(e){ return null; } },
+  saveScales: function(sc) { try{ localStorage.setItem(this.scaleKey, JSON.stringify(sc)); }catch(e){} },
+  loadScales: function()   { try{ var r=localStorage.getItem(this.scaleKey); return r?JSON.parse(r):null; }catch(e){ return null; } }
 };
 
-// ── Override go() to save before switching ────────────────────────────────────
-var _goOriginal = go;
+// ── go(): save current project before switching ────────────────────────────────
+var _goBase = go;
 go = function(i) {
-  // Save current project state before leaving
-  if (PROJECTS[current]) STORE.saveProject(PROJECTS[current].id);
+  if (PROJECTS[current]) STORE.save(PROJECTS[current].id);
   current = i;
-  _buildWithState(PROJECTS[current]);
+  var p = PROJECTS[current];
+  if (!STORE.restore(p.id)) build(p); // build fresh if no saved state
   updateNav();
   setTimeout(function(){ MAG.sync(); }, 60);
 };
 
-// ── Build with saved state ─────────────────────────────────────────────────────
-function _buildWithState(p) {
-  var saved = STORE.loadProject(p.id);
-  canvas.innerHTML = '';
-
-  // Override BASE with saved positions for this project
-  var effectiveBase = JSON.parse(JSON.stringify(BASE));
-  if (saved && saved.positions) {
-    Object.keys(saved.positions).forEach(function(k) {
-      effectiveBase[k] = saved.positions[k];
-    });
-  }
-
-  var deletedKeys = (saved && saved.deleted) ? saved.deleted : [];
-
-  // Temporarily override BASE for build()
-  var origBase = BASE;
-  BASE = effectiveBase;
-  build(p);
-  BASE = origBase;
-
-  // Remove deleted elements
-  deletedKeys.forEach(function(k) {
-    canvas.querySelectorAll('.drag').forEach(function(el) {
-      if (el.dataset.key === k) el.parentNode && el.parentNode.removeChild(el);
-    });
-  });
-}
-
 // ── Autosave on drag end ──────────────────────────────────────────────────────
-document.addEventListener('mouseup', function() {
-  if (PROJECTS[current]) {
-    setTimeout(function() { STORE.saveProject(PROJECTS[current].id); }, 100);
-  }
+document.addEventListener('mouseup', function(){
+  if (PROJECTS[current]) setTimeout(function(){ STORE.save(PROJECTS[current].id); }, 120);
 });
-
-// ── Autosave on delete ────────────────────────────────────────────────────────
-// Wrap the delete button click — already handled via autosave on mouseup
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildDots();
-// Use go() directly (now uses _buildWithState)
 current = 0;
-_buildWithState(PROJECTS[current]);
+// Try restore; if none, build fresh
+if (!STORE.restore(PROJECTS[current].id)) build(PROJECTS[current]);
 updateNav();
 MAG.init();
 setTimeout(function(){ MAG.sync(); }, 350);
 EDIT.init();
 LB.init();
 
-// Restore skin
-var savedSkin = STORE.loadSkin() || 'blueprint';
-EDIT.setSkin(savedSkin);
+// Restore skin — default blueprint
+setTimeout(function(){
+  var skin = STORE.loadSkin() || 'blueprint';
+  EDIT.setSkin(skin);
+}, 0);
 
 // Restore scales
 var savedScales = STORE.loadScales();
