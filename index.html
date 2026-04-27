@@ -552,7 +552,7 @@ body.skin-dark [data-editable][contenteditable="true"]:focus{background:rgba(0,1
   <button class="nav-btn" id="btn-next">→</button>
 </nav>
 
-<div id="edit-panel" class="visible">
+<div id="edit-panel">
   <div id="ep-header">
     <div id="ep-title">MODO EDICION</div>
     <div id="ep-sub">Ctrl+Shift+E para cerrar</div>
@@ -1913,6 +1913,10 @@ MAG.init();
 setTimeout(function(){ MAG.sync(); }, 350);
 EDIT.init();
 LB.init();
+// Always start with edit panel closed — must run AFTER EDIT.init()
+document.getElementById('edit-panel').classList.remove('visible');
+document.body.classList.remove('edit-mode');
+EDIT.active = false;
 EDIT.disableEditing(); // ensure non-editable on load
 
 // Restore skin — default blueprint
