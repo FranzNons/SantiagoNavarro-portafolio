@@ -25,55 +25,50 @@ html,body{width:100%;height:100%;overflow:hidden;background:#e8e3da;
 .drag:active{cursor:grabbing}
 .drag.dragging{z-index:800!important;cursor:grabbing}
 
-/* ── UNIFIED SKIN: Blueprint × PlayStation ── */
-/* Structure: Blueprint (dark blue board + grid + Space Mono)
-   Palette & effects: PlayStation (Blue #0070cc, Cyan hover #1eaedb, surfaces, shadows) */
+/* ── SKIN: Blueprint × PlayStation ── */
+/* Blueprint structure + grid | PlayStation palette, effects, typography */
 
-body {
-  font-family: 'Space Mono', monospace;
-}
-
-/* Board — Blueprint dark blue with white grid lines */
+/* Board: Blueprint dark blue with PS grid */
 #board {
   background-color: #0a1628;
   background-image:
     linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
   background-size: 52px 52px, 52px 52px, 13px 13px, 13px 13px;
-  background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+  background-position: -1px -1px,-1px -1px,-1px -1px,-1px -1px;
 }
 
-/* Cards — elevated dark surface (PS #121314), no torn paper */
+/* Cards: no torn paper, PS elevated dark surface */
 .torn { background: transparent !important; filter: none !important; }
 .torn::before, .torn::after { display: none !important; }
 .torn-inner {
   background: #0d1f38;
-  border-radius: 6px;
-  border: 0.5px solid rgba(74, 158, 255, 0.18);
-  box-shadow: 0 5px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(74,158,255,0.08);
-  font-family: 'Space Mono', monospace;
+  border-radius: 8px;
+  border: 0.5px solid rgba(74,158,255,0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(74,158,255,0.07);
+  padding: 20px 24px 22px;
   transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
 }
 .drag:hover .torn-inner {
-  border-color: rgba(30, 174, 219, 0.45);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.6), 0 0 0 1px rgba(30,174,219,0.2), inset 0 1px 0 rgba(74,158,255,0.10);
+  border-color: rgba(30,174,219,0.45);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.6), 0 0 0 1px rgba(30,174,219,0.18), inset 0 1px 0 rgba(74,158,255,0.10);
   transform: translateY(-1px);
 }
 
-/* Typography — Space Mono, PS weight hierarchy */
+/* Typography: Space Mono + PS weight hierarchy */
 .note-eyebrow {
   font-family: 'Space Mono', monospace;
   font-size: 9px; font-weight: 700;
-  letter-spacing: 2.5px; color: #0070cc; opacity: 0.85;
-  margin-bottom: 8px;
+  letter-spacing: 2px; color: #0070cc;
+  margin-bottom: 8px; opacity: 0.9;
 }
 .note-headline {
   font-family: 'Space Mono', monospace;
-  font-weight: 400; font-size: 18px;
-  color: #e8f4ff; line-height: 1.25; letter-spacing: -0.3px;
-  margin-bottom: 6px;
+  font-weight: 400; font-size: 17px;
+  color: #e8f4ff; line-height: 1.25; letter-spacing: -0.2px;
+  margin-bottom: 5px;
 }
 .note-handwritten {
   font-family: 'Space Mono', monospace;
@@ -82,13 +77,10 @@ body {
 }
 .note-body {
   font-family: 'Space Mono', monospace;
-  font-weight: 400; font-size: 11px;
-  color: #8ab4d8; line-height: 1.75; letter-spacing: 0.1px;
+  font-size: 11px; color: #8ab4d8; line-height: 1.75;
 }
 .note-link { color: #53b1ff; font-weight: 700; transition: color 0.18s; }
 .note-link:hover { color: #1eaedb; }
-
-/* Pin — PlayStation Blue */
 .note-pin {
   background: radial-gradient(circle at 38% 32%, #4a9eff, #0070cc);
   box-shadow: 0 2px 8px rgba(0,112,204,0.5);
@@ -97,51 +89,49 @@ body {
 /* Polaroid */
 .polaroid {
   background: #0d1f38;
-  border-radius: 6px;
-  border: 0.5px solid rgba(74,158,255,0.18);
-  box-shadow: 0 5px 16px rgba(0,0,0,0.5);
-  padding: 10px 10px 36px;
+  border-radius: 8px;
+  border: 0.5px solid rgba(74,158,255,0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  padding: 9px 9px 34px;
   transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
 }
 .drag:hover .polaroid {
   border-color: rgba(30,174,219,0.45); transform: translateY(-1px);
   box-shadow: 0 8px 28px rgba(0,0,0,0.6);
 }
-.polaroid-img { background: #061424; border-radius: 4px; }
-.polaroid-caption {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px; color: #4a7aaa; letter-spacing: 0.2px;
-}
+.polaroid-img { background: #061424; border-radius: 4px; width:190px; height:172px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.polaroid-img img { width:100%; height:100%; object-fit:cover; }
+.polaroid-caption { font-family: 'Space Mono', monospace; font-size: 11px; color: #4a7aaa; margin-top: 8px; text-align: center; }
 
 /* Posts */
 .insta-post {
   background: #0d1f38;
-  border-radius: 6px;
-  border: 0.5px solid rgba(74,158,255,0.18);
-  box-shadow: 0 5px 16px rgba(0,0,0,0.5);
+  border-radius: 8px;
+  border: 0.5px solid rgba(74,158,255,0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
 }
-.drag:hover .insta-post {
-  border-color: rgba(30,174,219,0.45); transform: translateY(-1px);
-}
-.insta-img { background: #061424; border-radius: 4px 4px 0 0; }
-.insta-actions { color: #4a7aaa; }
-.insta-caption { font-family: 'Space Mono', monospace; color: #1a3a5c; font-size: 10px; }
+.drag:hover .insta-post { border-color: rgba(30,174,219,0.45); transform: translateY(-1px); }
+.insta-img { background: #061424; border-radius: 4px 4px 0 0; width:126px; height:126px; overflow:hidden; display:flex; align-items:center; justify-content:center; position:relative; }
+.insta-img img { width:100%; height:100%; object-fit:cover; }
+.insta-actions { color: #4a7aaa; display:flex; align-items:center; gap:6px; padding:5px 7px 2px; font-size:12px; }
+.insta-save { margin-left: auto; }
+.insta-caption { font-family: 'Space Mono', monospace; color: #1a3a5c; font-size: 10px; padding:1px 7px 7px; }
 
 /* Browser */
 .browser {
   background: #0d1f38;
-  border-radius: 6px;
-  border: 0.5px solid rgba(74,158,255,0.18);
-  box-shadow: 0 5px 16px rgba(0,0,0,0.5);
+  border-radius: 8px;
+  border: 0.5px solid rgba(74,158,255,0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  width: 380px;
   transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
 }
-.drag:hover .browser {
-  border-color: rgba(30,174,219,0.45); transform: translateY(-1px);
-}
-.browser-bar { background: #061424; border-radius: 6px 6px 0 0; }
-.browser-url { background: #0a1628; color: #53b1ff; font-family: 'Space Mono', monospace; font-size: 10px; }
-.browser-screen { background: #061424; }
+.drag:hover .browser { border-color: rgba(30,174,219,0.45); transform: translateY(-1px); }
+.browser-bar { background: #061424; padding:7px 11px; display:flex; align-items:center; gap:5px; border-radius:8px 8px 0 0; }
+.browser-url { background: #0a1628; color: #53b1ff; font-family: 'Space Mono', monospace; font-size:10px; flex:1; margin-left:8px; border-radius:3px; padding:3px 9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.browser-screen { height:180px; background:#061424; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+.browser-screen img { width:100%; height:100%; object-fit:cover; }
 
 /* Logo — PS Blue glow ring on hover */
 .logo-star {
@@ -153,48 +143,44 @@ body {
   box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #0070cc, 0 4px 24px rgba(0,112,204,0.5);
   transform: scale(1.08);
 }
-.logo-star-text { color: #ffffff; font-family: 'Space Mono', monospace; font-size: 11px; }
-.logo-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: #1a3a5c; }
+.logo-star-text { color: #ffffff; font-family: 'Space Mono', monospace; font-size: 11px; position:absolute; }
+.logo-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: #1a3a5c; text-transform:uppercase; }
 
 /* Agencia */
-.agencia-star { background: #0d1f38; border: 0.5px solid rgba(74,158,255,0.18); }
-.agencia-star-text { font-family: 'Space Mono', monospace; color: #4a7aaa; }
-.agencia-eyebrow, .agencia-label { font-family: 'Space Mono', monospace; color: #1a3a5c; font-size: 9px; letter-spacing: 1.5px; }
+.agencia-star { background: #0d1f38; border: 0.5px solid rgba(74,158,255,0.2); }
+.agencia-star-text { font-family: 'Space Mono', monospace; color: #4a7aaa; font-size:10px; position:absolute; text-align:center; }
+.agencia-eyebrow, .agencia-label { font-family: 'Space Mono', monospace; color: #1a3a5c; font-size: 9px; letter-spacing:1.5px; text-align:center; }
 
 /* Float icons */
-.float-icon { color: #0070cc; opacity: 0.75; filter: drop-shadow(0 0 6px rgba(0,112,204,0.4)); }
+.float-icon { color: #0070cc; opacity: 0.75; filter: drop-shadow(0 0 6px rgba(0,112,204,0.4)); font-size:32px; line-height:1; }
+.float-icon img { width:36px; height:36px; object-fit:contain; }
 
-/* Placeholders */
-.ph { background: #061424; }
-.ph-text { font-family: 'Space Mono', monospace; color: #1a3a5c; }
-.banner-ph { background: #0d1f38; color: #1a3a5c; font-family: 'Space Mono', monospace; }
-.embed-wrap { background: #0d1f38; border-radius: 6px; border: 0.5px solid rgba(74,158,255,0.18); }
-.embed-label { background: #061424; color: #0070cc; font-family: 'Space Mono', monospace; font-weight: 700; }
-
-/* Video */
-.video-wrap { box-shadow: 0 5px 16px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(74,158,255,0.15); border-radius: 6px; }
-
-/* Tablet */
-.tablet-wrap {
-  background: linear-gradient(145deg, #0d1f38, #061424);
-  box-shadow: 0 0 0 1.5px rgba(0,112,204,0.35), 0 8px 32px rgba(0,0,0,0.6);
-}
-.tablet-btn { border-color: rgba(0,112,204,0.3); background: #0d1f38; }
+/* Placeholder */
+.ph { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; background:#061424; }
+.ph-text { font-family:'Space Mono',monospace; font-size:11px; color:#1a3a5c; text-align:center; max-width:130px; line-height:1.4; }
+.banner-ph { background: #0d1f38; color: #1a3a5c; font-family:'Space Mono',monospace; }
+.embed-wrap { background: #0d1f38; border-radius: 8px; border: 0.5px solid rgba(74,158,255,0.2); }
+.embed-label { background: #061424; color: #0070cc; font-family:'Space Mono',monospace; font-weight:700; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:5px 8px 4px; border-bottom:0.5px solid rgba(74,158,255,0.15); }
 
 /* Nav — PS deep blue footer */
 #nav {
   background: rgba(0,48,135,0.96);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-color: rgba(255,255,255,0.10);
   box-shadow: 0 4px 32px rgba(0,0,0,0.6);
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:12px;
+  border-radius:40px; padding:8px 18px; z-index:9000;
 }
 .nav-btn {
   background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.15);
-  color: #e8f4ff;
-  border-radius: 999px;
-  font-family: 'Space Mono', monospace;
-  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  border: 0.5px solid rgba(255,255,255,0.15);
+  color: #e8f4ff; border-radius: 999px;
+  width:32px; height:32px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+  transition: background 0.18s, border 0.18s, box-shadow 0.18s, transform 0.18s;
+  flex-shrink:0;
 }
 .nav-btn:hover:not(:disabled) {
   background: #1eaedb;
@@ -204,36 +190,35 @@ body {
   color: #ffffff;
 }
 .nav-btn:disabled { opacity: 0.22; cursor: not-allowed; }
-#nav-dots { display: flex; gap: 7px; align-items: center; }
-.nav-dot { background: rgba(255,255,255,0.2); }
+#nav-dots { display:flex; gap:7px; align-items:center; }
+.nav-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.2); cursor:pointer; transition:background 0.2s,transform 0.2s; }
 .nav-dot.active { background: #1eaedb; transform: scale(1.4); }
-#nav-label {
-  font-family: 'Manrope', sans-serif; font-weight: 700;
-  font-size: 13px; color: #ffffff; letter-spacing: 0.3px;
-}
+#nav-label { font-family:'Manrope',sans-serif; font-weight:700; font-size:13px; color:#ffffff; min-width:140px; text-align:center; }
 
-/* Top pills */
-#hint-pill, #reset-btn {
-  background: rgba(10,22,40,0.92);
-  border-color: rgba(74,158,255,0.15);
-  color: #1a3a5c;
-  font-family: 'Space Mono', monospace;
-}
-#reset-btn:hover { background: rgba(30,174,219,0.12); color: #1eaedb; }
+/* Top UI */
+#hint-pill { background:rgba(10,22,40,0.92); border-color:rgba(74,158,255,0.15); color:#1a3a5c; font-family:'Space Mono',monospace; font-size:12px; }
+#reset-btn { background:rgba(10,22,40,0.92); border-color:rgba(74,158,255,0.15); color:#1a3a5c; font-family:'Space Mono',monospace; font-size:11px; transition:background 0.14s; }
+#reset-btn:hover { background:rgba(30,174,219,0.12); color:#1eaedb; }
 
-/* Magnifier — PS Blue collar */
+/* Magnifier */
 #mag-ring { box-shadow: 0 0 0 9px #0d2040, 0 0 0 11px #061424, 0 0 0 13px rgba(0,112,204,0.4), 0 6px 24px rgba(0,0,0,0.7); }
 #mag-collar { background: linear-gradient(180deg, #0070cc 0%, #003087 50%, #0070cc 100%); }
 #mag-handle { background: linear-gradient(to right, #061424 0%, #0d1f38 40%, #1a3a5c 50%, #0d1f38 60%, #061424 100%); }
 
-/* Edit mode */
-.edit-panel { background: rgba(6,20,36,0.97); }
-body.edit-mode .drag { outline-color: rgba(0,112,204,0.35); }
+/* Tablet */
+.tablet-wrap { background: linear-gradient(145deg,#0d1f38,#061424); box-shadow: 0 0 0 1.5px rgba(0,112,204,0.35), 0 8px 32px rgba(0,0,0,0.6); }
+.tablet-btn { border-color: rgba(0,112,204,0.3); background:#0d1f38; }
+
+/* Edit panel */
+#edit-panel { background: rgba(6,14,30,0.97); }
+body.edit-mode .drag { outline-color: rgba(0,112,204,0.35); outline-offset:4px; }
 body.edit-mode .drag:hover { outline-color: #0070cc; }
 body.edit-mode .drag.selected { outline-color: #1eaedb; }
 [data-editable][contenteditable="true"]:hover { background: rgba(0,112,204,0.08); }
 [data-editable][contenteditable="true"]:focus { background: rgba(0,112,204,0.12); outline: none; }
 
+/* Lightbox backdrop */
+#lightbox { background: rgba(6,14,30,0.88); }
 
 
 #mag-wrap{position:fixed;width:180px;height:268px;cursor:grab;z-index:8000;pointer-events:all}
@@ -394,7 +379,10 @@ body.edit-mode .drag.selected { outline-color: #1eaedb; }
       <button class="ep-btn primary" id="ep-save">Guardar y descargar index.html</button>
       <button class="ep-btn" id="ep-reset">Reordenar</button>
     </div>
+    <div class="ep-section">
+      <div class="ep-section-title">Skin</div>
 
+    </div>
     <div class="ep-edit-hint">Ctrl+Shift+E para cerrar</div>
   </div>
 </div>
@@ -1032,8 +1020,7 @@ var EDIT = {
       var src='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
       src=src.replace(/var BASE = \{[\s\S]*?\n\};/,bStr);
       src=src.replace(/var SAVED_SCALES = [^;]*;/,sStr);
-      if(src.indexOf('var SAVED_SKIN')!==-1){src=src.replace(/var SAVED_SKIN=[^;]*;/,skinStr);}
-      else{src=src.replace('var SAVED_SCALES',skinStr+'\nvar SAVED_SCALES');}
+      
 
       STORE.save(PROJECTS[current].id);
       var blob=new Blob([src],{type:'text/html;charset=utf-8'});
@@ -1053,7 +1040,7 @@ var EDIT = {
     };
   },
 
-  currentSkin:'default',  currentSkin:'default',
+  currentSkin:'default',
   createElement:function(type){
     var el;
     if(type==='title'){
@@ -1472,7 +1459,9 @@ setTimeout(function(){ MAG.sync(); }, 350);
 EDIT.init();
 LB.init();
 
-
+// Restore skin — default blueprint
+setTimeout(function(){
+}, 0);
 
 // Restore scales
 var savedScales = STORE.loadScales();
@@ -1483,8 +1472,6 @@ if (savedScales) {
     var vl=document.getElementById('sv-'+k); if(vl)vl.textContent=savedScales[k].toFixed(1)+'x';
   });
 }
-var _initSkin = SAVED_SKIN || 'dark';
-if(_initSkin !== 'default') EDIT.setSkin(_initSkin);
 </script>
 </body>
 </html>
