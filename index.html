@@ -1214,6 +1214,7 @@ var EDIT = {
       var scMap={'sc-notes':'notes','sc-photo':'photo','sc-posts':'posts','sc-browser':'browser','sc-logo':'logo','sc-icons':'icons'};
       var ns={};
       Object.keys(scMap).forEach(function(id){ns[scMap[id]]=parseFloat(document.getElementById(id).value);});
+      STORE.saveScales(ns);
 
       var bLines=['var BASE = {'];
       keys.forEach(function(k){
@@ -1241,7 +1242,13 @@ var EDIT = {
       setTimeout(function(){btn.textContent=orig;},3000);
     };
 
-    document.getElementById('ep-reset').onclick=function(){document.getElementById('reset-btn').click();};
+    document.getElementById('ep-reset').onclick=function(){
+      // Clear saved state for current project so BASE is used
+      if(PROJECTS[current]){
+        try{ localStorage.removeItem('proj_'+PROJECTS[current].id); }catch(e){}
+      }
+      document.getElementById('reset-btn').click();
+    };
   },
 
   setSkin:function(name){
@@ -1258,6 +1265,7 @@ var EDIT = {
       if(btn) btn.style.borderColor = (k===name) ? skins[k].active : skins[k].inactive;
     });
     this.currentSkin=name;
+    if(typeof STORE!=='undefined') STORE.saveSkin(name);
     MAG.sync();
   },
   currentSkin:'default',
@@ -1598,20 +1606,132 @@ var LB = {
   }
 };
 
+// ── PERSISTENCE (localStorage) ───────────────────────────────────────────────
+var STORE = {
+  // Save current canvas state for a project
+  saveProject: function(projectId) {
+    var state = { positions: {}, deleted: [] };
+    canvas.querySelectorAll('.drag').forEach(function(el) {
+      var key = el.dataset.key;
+      if (key) {
+        // Check if element is still in canvas (not deleted)
+        state.positions[key] = {
+          x: parseInt(el.style.left) || 0,
+          y: parseInt(el.style.top)  || 0
+        };
+        if (el.dataset.rot) state.positions[key].rot = parseFloat(el.dataset.rot);
+      }
+    });
+    // Track which base keys are missing (deleted)
+    var baseKeys = ['logo','brand','desc','photo','challenge','role','copy','post0','post1','post2','browser'];
+    baseKeys.forEach(function(k) {
+      var found = false;
+      canvas.querySelectorAll('.drag').forEach(function(el){ if(el.dataset.key===k) found=true; });
+      if (!found) state.deleted.push(k);
+    });
+    try { localStorage.setItem('proj_'+projectId, JSON.stringify(state)); } catch(e){}
+  },
+
+  // Load saved state for a project
+  loadProject: function(projectId) {
+    try {
+      var raw = localStorage.getItem('proj_'+projectId);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  },
+
+  // Save skin
+  saveSkin: function(name) {
+    try { localStorage.setItem('portfolio_skin', name); } catch(e){}
+  },
+  loadSkin: function() {
+    try { return localStorage.getItem('portfolio_skin'); } catch(e){ return null; }
+  },
+
+  // Save scales
+  saveScales: function(scales) {
+    try { localStorage.setItem('portfolio_scales', JSON.stringify(scales)); } catch(e){}
+  },
+  loadScales: function() {
+    try {
+      var raw = localStorage.getItem('portfolio_scales');
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+};
+
+// ── Override go() to save before switching ────────────────────────────────────
+var _goOriginal = go;
+go = function(i) {
+  // Save current project state before leaving
+  if (PROJECTS[current]) STORE.saveProject(PROJECTS[current].id);
+  current = i;
+  _buildWithState(PROJECTS[current]);
+  updateNav();
+  setTimeout(function(){ MAG.sync(); }, 60);
+};
+
+// ── Build with saved state ─────────────────────────────────────────────────────
+function _buildWithState(p) {
+  var saved = STORE.loadProject(p.id);
+  canvas.innerHTML = '';
+
+  // Override BASE with saved positions for this project
+  var effectiveBase = JSON.parse(JSON.stringify(BASE));
+  if (saved && saved.positions) {
+    Object.keys(saved.positions).forEach(function(k) {
+      effectiveBase[k] = saved.positions[k];
+    });
+  }
+
+  var deletedKeys = (saved && saved.deleted) ? saved.deleted : [];
+
+  // Temporarily override BASE for build()
+  var origBase = BASE;
+  BASE = effectiveBase;
+  build(p);
+  BASE = origBase;
+
+  // Remove deleted elements
+  deletedKeys.forEach(function(k) {
+    canvas.querySelectorAll('.drag').forEach(function(el) {
+      if (el.dataset.key === k) el.parentNode && el.parentNode.removeChild(el);
+    });
+  });
+}
+
+// ── Autosave on drag end ──────────────────────────────────────────────────────
+document.addEventListener('mouseup', function() {
+  if (PROJECTS[current]) {
+    setTimeout(function() { STORE.saveProject(PROJECTS[current].id); }, 100);
+  }
+});
+
+// ── Autosave on delete ────────────────────────────────────────────────────────
+// Wrap the delete button click — already handled via autosave on mouseup
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
 buildDots();
-go(0);
+// Use go() directly (now uses _buildWithState)
+current = 0;
+_buildWithState(PROJECTS[current]);
+updateNav();
 MAG.init();
-setTimeout(function(){MAG.sync();},350);
+setTimeout(function(){ MAG.sync(); }, 350);
 EDIT.init();
 LB.init();
-// Default to PlayStation skin
-if(!SAVED_SKIN) EDIT.setSkin('blueprint');
 
-if(SAVED_SCALES){
-  var sm2={notes:'sc-notes',photo:'sc-photo',posts:'sc-posts',browser:'sc-browser',logo:'sc-logo',icons:'sc-icons'};
-  Object.keys(SAVED_SCALES).forEach(function(k){
-    var sl=document.getElementById(sm2[k]); if(sl)sl.value=SAVED_SCALES[k];
-    var vl=document.getElementById('sv-'+k); if(vl)vl.textContent=SAVED_SCALES[k].toFixed(1)+'x';
+// Restore skin
+var savedSkin = STORE.loadSkin() || 'blueprint';
+EDIT.setSkin(savedSkin);
+
+// Restore scales
+var savedScales = STORE.loadScales();
+if (savedScales) {
+  var sm2 = {notes:'sc-notes',photo:'sc-photo',posts:'sc-posts',browser:'sc-browser',logo:'sc-logo',icons:'sc-icons'};
+  Object.keys(savedScales).forEach(function(k){
+    var sl=document.getElementById(sm2[k]); if(sl)sl.value=savedScales[k];
+    var vl=document.getElementById('sv-'+k); if(vl)vl.textContent=savedScales[k].toFixed(1)+'x';
   });
 }
 var _initSkin = SAVED_SKIN || 'dark';
