@@ -1665,7 +1665,8 @@ go = function(i) {
   if (PROJECTS[current]) STORE.save(PROJECTS[current].id);
   current = i;
   var p = PROJECTS[current];
-  if (!STORE.restore(p.id)) build(p); // build fresh if no saved state
+  if (!STORE.restore(p.id)) build(p);
+  if (!EDIT.active) EDIT.disableEditing();
   updateNav();
   setTimeout(function(){ MAG.sync(); }, 60);
 };
@@ -1678,13 +1679,14 @@ document.addEventListener('mouseup', function(){
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildDots();
 current = 0;
-// Try restore; if none, build fresh
 if (!STORE.restore(PROJECTS[current].id)) build(PROJECTS[current]);
+EDIT.disableEditing();
 updateNav();
 MAG.init();
 setTimeout(function(){ MAG.sync(); }, 350);
 EDIT.init();
 LB.init();
+EDIT.disableEditing(); // ensure non-editable on load
 
 // Restore skin — default blueprint
 setTimeout(function(){
