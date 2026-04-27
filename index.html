@@ -506,6 +506,19 @@ body.skin-dark [data-editable][contenteditable="true"]:focus{background:rgba(0,1
 .ep-btn.primary:hover{background:#f5cc45}
 .ep-edit-hint{font-size:10px;color:rgba(255,255,255,0.2);text-align:center;
   padding:12px 0 4px;font-family:'DM Sans',sans-serif;line-height:1.6}
+.ep-color-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.ep-color-row span{font-size:11px;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif}
+.ep-color-swatch{width:28px;height:28px;border-radius:6px;border:0.5px solid rgba(255,255,255,0.15);
+  cursor:pointer;overflow:hidden;position:relative;flex-shrink:0}
+.ep-color-swatch input[type=color]{position:absolute;inset:-4px;width:calc(100%+8px);height:calc(100%+8px);
+  border:none;cursor:pointer;opacity:0}
+.ep-font-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.ep-font-row span{font-size:11px;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif}
+.ep-font-select{background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.12);
+  border-radius:6px;color:#e8e3da;font-size:11px;padding:5px 8px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;width:140px}
+.ep-font-select option{background:#1a1714}
+.ep-divider{border:none;border-top:0.5px solid rgba(255,255,255,0.07);margin:14px 0}
 </style>
 </head>
 <body class="edit-mode skin-blueprint" style="">
@@ -592,6 +605,65 @@ body.skin-dark [data-editable][contenteditable="true"]:focus{background:rgba(0,1
         </button>
       </div>
     </div>
+    <hr class="ep-divider">
+    <div class="ep-section">
+      <div class="ep-section-title">Apariencia</div>
+
+      <div class="ep-color-row">
+        <span>Fondo del board</span>
+        <div class="ep-color-swatch" id="sw-board" title="Color de fondo">
+          <input type="color" id="cp-board" value="#0a1628">
+        </div>
+      </div>
+      <div class="ep-color-row">
+        <span>Color de cards</span>
+        <div class="ep-color-swatch" id="sw-card" title="Fondo de tarjetas">
+          <input type="color" id="cp-card" value="#0d1f38">
+        </div>
+      </div>
+      <div class="ep-color-row">
+        <span>Acento principal</span>
+        <div class="ep-color-swatch" id="sw-accent" title="Color de acento">
+          <input type="color" id="cp-accent" value="#0070cc">
+        </div>
+      </div>
+      <div class="ep-color-row">
+        <span>Acento hover</span>
+        <div class="ep-color-swatch" id="sw-hover" title="Color de hover">
+          <input type="color" id="cp-hover" value="#1eaedb">
+        </div>
+      </div>
+      <div class="ep-color-row">
+        <span>Texto principal</span>
+        <div class="ep-color-swatch" id="sw-ink" title="Color de texto">
+          <input type="color" id="cp-ink" value="#e8f4ff">
+        </div>
+      </div>
+      <div class="ep-color-row">
+        <span>Nav / footer</span>
+        <div class="ep-color-swatch" id="sw-nav" title="Color del nav">
+          <input type="color" id="cp-nav" value="#003087">
+        </div>
+      </div>
+
+      <div class="ep-font-row" style="margin-top:12px;">
+        <span>Tipografía</span>
+        <select class="ep-font-select" id="ep-font-select">
+          <option value="'Space Mono', monospace">Space Mono</option>
+          <option value="'DM Sans', sans-serif">DM Sans</option>
+          <option value="'DM Serif Display', serif">DM Serif Display</option>
+          <option value="'Manrope', sans-serif">Manrope</option>
+          <option value="'Caveat', cursive">Caveat</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Courier New', monospace">Courier New</option>
+        </select>
+      </div>
+
+      <button class="ep-btn" id="ep-reset-appearance" style="margin-top:8px;">
+        ↺ Restablecer apariencia
+      </button>
+    </div>
+
     <div class="ep-edit-hint">Ctrl+Shift+E para cerrar</div>
   </div>
 </div>
@@ -1242,6 +1314,103 @@ var EDIT = {
       setTimeout(function(){btn.textContent=orig;},3000);
     };
 
+    // ── APPEARANCE PICKERS ──────────────────────────────────────
+    var APPEARANCE_DEFAULTS = {
+      board:  '#0a1628',
+      card:   '#0d1f38',
+      accent: '#0070cc',
+      hover:  '#1eaedb',
+      ink:    '#e8f4ff',
+      nav:    '#003087',
+      font:   "'Space Mono', monospace"
+    };
+
+    function applyAppearance(a) {
+      // Board background color
+      document.getElementById('board').style.backgroundColor = a.board;
+      // Card backgrounds
+      document.querySelectorAll('.torn-inner,.polaroid,.insta-post,.browser,.embed-wrap').forEach(function(el){
+        el.style.background = a.card;
+      });
+      // Accent color (CSS custom property + direct overrides)
+      document.documentElement.style.setProperty('--ep-accent', a.accent);
+      document.documentElement.style.setProperty('--ep-hover', a.hover);
+      // Apply accent to eyebrows and links
+      document.querySelectorAll('.note-eyebrow').forEach(function(el){ el.style.color = a.accent; });
+      document.querySelectorAll('.note-link').forEach(function(el){ el.style.color = a.hover; });
+      // Nav background
+      var nav = document.getElementById('nav');
+      if(nav) nav.style.background = a.nav;
+      // Logo star
+      document.querySelectorAll('.logo-star').forEach(function(el){
+        el.style.background = 'linear-gradient(135deg,'+a.accent+','+a.nav+')';
+      });
+      // Typography
+      document.querySelectorAll('.note-headline,.note-body,.note-handwritten,.note-eyebrow,.note-link,.polaroid-caption,.insta-caption,.logo-label,.logo-star-text').forEach(function(el){
+        el.style.fontFamily = a.font;
+      });
+      // Update swatch backgrounds to show current color
+      ['board','card','accent','hover','ink','nav'].forEach(function(k){
+        var sw = document.getElementById('sw-'+k);
+        if(sw && a[k]) sw.style.background = a[k];
+      });
+      // Update font select
+      var fs = document.getElementById('ep-font-select');
+      if(fs) fs.value = a.font;
+    }
+
+    function saveAppearance(a) {
+      try{ localStorage.setItem('p_appearance', JSON.stringify(a)); }catch(e){}
+    }
+
+    function loadAppearance() {
+      try{
+        var r = localStorage.getItem('p_appearance');
+        return r ? JSON.parse(r) : null;
+      }catch(e){ return null; }
+    }
+
+    var currentAppearance = loadAppearance() || JSON.parse(JSON.stringify(APPEARANCE_DEFAULTS));
+
+    // Apply on load
+    setTimeout(function(){ applyAppearance(currentAppearance); }, 100);
+
+    // Wire up color pickers
+    ['board','card','accent','hover','ink','nav'].forEach(function(k){
+      var cp = document.getElementById('cp-'+k);
+      if(!cp) return;
+      cp.value = currentAppearance[k] || APPEARANCE_DEFAULTS[k];
+      cp.addEventListener('input', function(){
+        currentAppearance[k] = cp.value;
+        applyAppearance(currentAppearance);
+        saveAppearance(currentAppearance);
+      });
+    });
+
+    // Wire up font select
+    var fontSel = document.getElementById('ep-font-select');
+    if(fontSel){
+      fontSel.value = currentAppearance.font || APPEARANCE_DEFAULTS.font;
+      fontSel.addEventListener('change', function(){
+        currentAppearance.font = fontSel.value;
+        applyAppearance(currentAppearance);
+        saveAppearance(currentAppearance);
+      });
+    }
+
+    // Reset appearance
+    document.getElementById('ep-reset-appearance').onclick = function(){
+      currentAppearance = JSON.parse(JSON.stringify(APPEARANCE_DEFAULTS));
+      applyAppearance(currentAppearance);
+      saveAppearance(currentAppearance);
+    };
+
+    // Re-apply after project switch
+    var _origGo = go;
+    document.getElementById('btn-prev').addEventListener('click', function(){ setTimeout(function(){ applyAppearance(currentAppearance); }, 150); });
+    document.getElementById('btn-next').addEventListener('click', function(){ setTimeout(function(){ applyAppearance(currentAppearance); }, 150); });
+
+    // ── RESET LAYOUT ──────────────────────────────────────────────
     document.getElementById('ep-reset').onclick=function(){
       if(PROJECTS[current]) STORE.clear(PROJECTS[current].id);
       build(PROJECTS[current]);
