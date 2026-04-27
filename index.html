@@ -671,6 +671,7 @@ body.skin-dark [data-editable][contenteditable="true"]:focus{background:rgba(0,1
 <script>
 var SAVED_SCALES = {"notes":1,"photo":1,"posts":1,"browser":1,"logo":1,"icons":1};
 var SAVED_SKIN = null;
+var SAVED_CANVAS = {};
 
 var PROJECTS = [
   {
@@ -1245,7 +1246,10 @@ var EDIT = {
       btn.addEventListener('click',function(){
         var type=btn.dataset.add;
         var el=self.createElement(type);
-        if(el){place(el,null,{x:dropX,y:dropY});dropX+=25;dropY+=25;if(dropX>650){dropX=400;dropY=300;}self.enableEditing();STORE.save(PROJECTS[current].id);MAG.sync();}
+        if(el){place(el,null,{x:dropX,y:dropY});dropX+=25;dropY+=25;if(dropX>650){dropX=400;dropY=300;}self.enableEditing();
+          // Snapshot
+          var sc=canvas.cloneNode(true);sc.querySelectorAll('.delete-btn').forEach(function(b){b.remove();});
+          SAVED_CANVAS[PROJECTS[current].id]=sc.innerHTML;STORE.save(PROJECTS[current].id);MAG.sync();}
       });
     });
 
@@ -1272,47 +1276,57 @@ var EDIT = {
     });
 
     document.getElementById('ep-save').onclick=function(){
-      var keys=['logo','brand','desc','photo','challenge','role','copy','post0','post1','post2','browser'];
-      var nb={};
-      keys.forEach(function(k){if(BASE[k])nb[k]=JSON.parse(JSON.stringify(BASE[k]));});
-      canvas.querySelectorAll('.drag').forEach(function(el){
-        var k=el.dataset.key;
-        if(k&&keys.indexOf(k)!==-1){
-          nb[k]={x:parseInt(el.style.left)||0,y:parseInt(el.style.top)||0};
-          if(el.dataset.rot)nb[k].rot=parseFloat(el.dataset.rot);
-        }
+      // Snapshot current project
+      var snapClone = canvas.cloneNode(true);
+      snapClone.querySelectorAll('.delete-btn').forEach(function(b){ b.remove(); });
+      SAVED_CANVAS[PROJECTS[current].id] = snapClone.innerHTML;
+
+      // Build the new SAVED_CANVAS JS string
+      var canvasLines = 'var SAVED_CANVAS = {';
+      var first = true;
+      Object.keys(SAVED_CANVAS).forEach(function(pid) {
+        if (!first) canvasLines += ',';
+        first = false;
+        // Escape the HTML for embedding in a JS string
+        var escaped = SAVED_CANVAS[pid]
+          .replace(/\\/g, '\\\\')
+          .replace(/'/g, "\\'")
+          .replace(/\n/g, '\\n')
+          .replace(/\r/g, '');
+        canvasLines += "\n  '" + pid + "': '" + escaped + "'";
       });
-      var scMap={'sc-notes':'notes','sc-photo':'photo','sc-posts':'posts','sc-browser':'browser','sc-logo':'logo','sc-icons':'icons'};
+      canvasLines += '\n};';
+
+      // Also save appearance
       var ns={};
-      Object.keys(scMap).forEach(function(id){ns[scMap[id]]=parseFloat(document.getElementById(id).value);});
-      STORE.saveScales(ns);
-
-      var bLines=['var BASE = {'];
-      keys.forEach(function(k){
-        if(!nb[k])return;
-        var v=nb[k]; var rot=v.rot!==undefined?', rot: '+v.rot:'';
-        bLines.push('  '+k+': { x: '+v.x+', y: '+v.y+rot+' },');
+      var scMap={'sc-notes':'notes','sc-photo':'photo','sc-posts':'posts','sc-browser':'browser','sc-logo':'logo','sc-icons':'icons'};
+      Object.keys(scMap).forEach(function(id){
+        var el=document.getElementById(id); if(el) ns[scMap[id]]=parseFloat(el.value);
       });
-      bLines.push('};');
-      var bStr=bLines.join('\n');
       var sStr='var SAVED_SCALES = '+JSON.stringify(ns)+';';
-
       var skinStr='var SAVED_SKIN="blueprint";';
-      var src='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
-      src=src.replace(/var BASE = \{[\s\S]*?\n\};/,bStr);
-      src=src.replace(/var SAVED_SCALES = [^;]*;/,sStr);
-      if(src.indexOf('var SAVED_SKIN')!==-1){src=src.replace(/var SAVED_SKIN=[^;]*;/,skinStr);}
-      else{src=src.replace('var SAVED_SCALES',skinStr+'\nvar SAVED_SCALES');}
 
-      STORE.save(PROJECTS[current].id);
+      var src='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+      // Replace SAVED_CANVAS block
+      src=src.replace('var SAVED_CANVAS = {};', canvasLines);
+
+      // Replace other vars
+      src=src.replace(/var SAVED_SCALES = [^;]*;/, sStr);
+      if(src.indexOf('var SAVED_SKIN')!==-1){
+        src=src.replace(/var SAVED_SKIN=[^;]*;/, skinStr);
+      }
+      // Close edit panel in saved file
+      src=src.replace('id="edit-panel" class="visible"','id="edit-panel"');
+      src=src.replace('id="edit-panel" class="visible "','id="edit-panel"');
+
       var blob=new Blob([src],{type:'text/html;charset=utf-8'});
       var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='index.html';
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
 
       var btn=document.getElementById('ep-save'); var orig=btn.textContent;
-      btn.textContent='Descargado - reemplaza tu index.html';
+      btn.textContent='Descargado - sube este archivo a GitHub';
       setTimeout(function(){btn.textContent=orig;},3000);
-    };
+    };;
 
     // ── APPEARANCE PICKERS ──────────────────────────────────────
     var APPEARANCE_DEFAULTS = {
@@ -1829,12 +1843,46 @@ var STORE = {
 };
 
 // ── go(): save current project before switching ────────────────────────────────
-var _goBase = go;
+// Re-attach drag + delete to restored canvas elements
+function _reattach() {
+  canvas.querySelectorAll('.drag').forEach(function(el) {
+    var url = el.dataset.url || null;
+    // Remove any stale delete buttons then re-add
+    el.querySelectorAll('.delete-btn').forEach(function(b){ b.remove(); });
+    var del = document.createElement('button');
+    del.className = 'delete-btn'; del.innerHTML = '&times;';
+    del.addEventListener('mousedown', function(e){ e.stopPropagation(); });
+    del.addEventListener('click', function(e){
+      e.stopPropagation();
+      el.parentNode && el.parentNode.removeChild(el);
+      if(typeof selectedEl !== 'undefined') selectedEl = null;
+      // Update snapshot
+      var sc = canvas.cloneNode(true);
+      sc.querySelectorAll('.delete-btn').forEach(function(b){ b.remove(); });
+      SAVED_CANVAS[PROJECTS[current].id] = sc.innerHTML;
+      if(typeof MAG !== 'undefined') MAG.sync();
+    });
+    el.appendChild(del);
+    draggable(el, url);
+  });
+}
+
 go = function(i) {
-  if (PROJECTS[current]) STORE.save(PROJECTS[current].id);
+  // Snapshot current project canvas before leaving
+  if (PROJECTS[current]) {
+    var snapClone = canvas.cloneNode(true);
+    snapClone.querySelectorAll('.delete-btn').forEach(function(b){ b.remove(); });
+    SAVED_CANVAS[PROJECTS[current].id] = snapClone.innerHTML;
+  }
   current = i;
   var p = PROJECTS[current];
-  if (!STORE.restore(p.id)) build(p);
+  // Restore from snapshot if available, otherwise build fresh
+  if (SAVED_CANVAS[p.id] !== undefined && SAVED_CANVAS[p.id] !== '') {
+    canvas.innerHTML = SAVED_CANVAS[p.id];
+    _reattach();
+  } else {
+    build(p);
+  }
   if (!EDIT.active) EDIT.disableEditing();
   updateNav();
   setTimeout(function(){ MAG.sync(); }, 60);
@@ -1842,13 +1890,23 @@ go = function(i) {
 
 // ── Autosave on drag end ──────────────────────────────────────────────────────
 document.addEventListener('mouseup', function(){
-  if (PROJECTS[current]) setTimeout(function(){ STORE.save(PROJECTS[current].id); }, 120);
+  if (PROJECTS[current]) setTimeout(function(){
+    var snapClone = canvas.cloneNode(true);
+    snapClone.querySelectorAll('.delete-btn').forEach(function(b){ b.remove(); });
+    SAVED_CANVAS[PROJECTS[current].id] = snapClone.innerHTML;
+  }, 120);
 });
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildDots();
 current = 0;
-if (!STORE.restore(PROJECTS[current].id)) build(PROJECTS[current]);
+// Use SAVED_CANVAS snapshot if present, else build fresh
+if (SAVED_CANVAS[PROJECTS[current].id] !== undefined && SAVED_CANVAS[PROJECTS[current].id] !== '') {
+  canvas.innerHTML = SAVED_CANVAS[PROJECTS[current].id];
+  _reattach();
+} else {
+  build(PROJECTS[current]);
+}
 EDIT.disableEditing();
 updateNav();
 MAG.init();
