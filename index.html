@@ -1691,7 +1691,7 @@ var LB = {
     clone.style.maxWidth  = 'none';
     clone.querySelectorAll('*').forEach(function(ch){
       var tag = ch.tagName;
-      if (tag !== 'IFRAME' && tag !== 'VIDEO') {
+      if (tag !== 'IFRAME' && tag !== 'VIDEO' && tag !== 'IMG') {
         ch.style.overflow  = 'visible';
         ch.style.maxHeight = 'none';
         ch.style.maxWidth  = 'none';
@@ -1705,9 +1705,17 @@ var LB = {
     // Fix transparent images: ensure no background bleeds through
     clone.querySelectorAll('img').forEach(function(img){
       img.style.background = 'transparent';
+      // Preserve inline max-width/max-height for constrained images (free-img)
+      // so they don't expand to natural size before measurement
     });
     clone.querySelectorAll('.logo-star.has-image, .float-icon').forEach(function(el){
       el.style.background = 'transparent';
+    });
+    // For free-img: the img's max-width/max-height define its display size
+    // Don't let the container div be measured before img renders
+    clone.querySelectorAll('.free-img img').forEach(function(img){
+      // Ensure the img reports its constrained size, not 0
+      if (!img.style.display) img.style.display = 'block';
     });
 
     // Measure natural size by rendering invisibly
